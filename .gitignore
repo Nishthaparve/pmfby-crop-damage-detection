@@ -1,0 +1,37 @@
+# Python
+venv/
+backend/venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+dist/
+
+# Environment/secrets
+.env
+.env.*
+!.env.example
+
+# Python generated files
+*.log
+
+# Uploaded user files
+backend/uploads/*
+
+# Local database
+backend/claims.db
+
+# ML/cache
+*.joblib
+
+# Downloaded training data (available separately; too large for normal GitHub repositories)
+datasets/*.zip
+datasets/archive/
+datasets/plant_village/
+
+# VS Code
+.vscode/
+# AI coding tools
+.qodo/
+_doc_review/
