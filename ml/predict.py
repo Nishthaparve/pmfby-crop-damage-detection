@@ -60,19 +60,24 @@ def load_model():
                         loaded = torch.load(MODEL_PATH, map_location=device)
                         # Check if it's a checkpoint dictionary or model
                         if isinstance(loaded, dict):
-                            print("⚠️ Loaded checkpoint - creating model from state_dict")
+                            print("⚠️ Loaded checkpoint - creating MobileNetV2 from state_dict")
+                            import torchvision.models as tv_models
                             import torch.nn as nn
-                            _model = nn.Sequential(
-                                nn.Flatten(),
-                                nn.Linear(3*224*224, 512),
-                                nn.ReLU(),
-                                nn.Linear(512, len(_class_names))
+                            _model = tv_models.mobilenet_v2(weights=None)
+                            _model.classifier = nn.Sequential(
+                                nn.Dropout(p=0.2),
+                                nn.Linear(_model.last_channel, len(_class_names))
                             )
-                            if 'model_state_dict' in loaded:
-                                _model.load_state_dict(loaded['model_state_dict'])
+                            state_dict = loaded.get('model_state_dict', loaded)
+                            # Support both classifier.1.weight and classifier[1]
+                            try:
+                                _model.load_state_dict(state_dict)
+                            except Exception:
+                                _model.classifier[1] = nn.Linear(_model.last_channel, len(_class_names))
+                                _model.load_state_dict(state_dict)
                             _model.eval()
                             _model = _model.to(device)
-                            print("✅ Model loaded from checkpoint")
+                            print("✅ MobileNetV2 loaded from checkpoint")
                         else:
                             _model = loaded
                             _model.eval()

@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./App.css";
 import Chatbot from "./Chatbot";
+import WeatherVerificationCard from "./WeatherVerificationCard";
+import AimlPerformance from "./AimlPerformance";
 import { languages, translate } from "./i18n";
 
 // ---- Auth token helpers (JWT stored in localStorage) ----
@@ -20,6 +22,141 @@ const authHeaders = (json = true) => {
   if (token) headers["Authorization"] = `Bearer ${token}`;
   return headers;
 };
+
+// ---- Clean Line SVG Icons for Institutional UI ----
+function PlantEmblemIcon({ size = 20, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12 22V8" />
+      <path d="M5 12H2a10 10 0 0 0 20 0h-3" />
+      <path d="M8 5c1-2 3.5-3 5-3 2 1.5 2 4 0 6-2 1.5-4 1-5-3Z" />
+      <path d="M9 13a4.5 4.5 0 0 0-4.5-4.5C3 8.5 2 9.5 2 11c0 2.5 3 4.5 7 4.5v-2.5Z" />
+      <path d="M15 13a4.5 4.5 0 0 1 4.5-4.5c1.5 0 2.5 1 2.5 2.5 0 2.5-3 4.5-7 4.5v-2.5Z" />
+    </svg>
+  );
+}
+
+function DashboardIcon({ size = 18, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect width="7" height="9" x="3" y="3" rx="1" />
+      <rect width="7" height="5" x="14" y="3" rx="1" />
+      <rect width="7" height="9" x="14" y="12" rx="1" />
+      <rect width="7" height="5" x="3" y="16" rx="1" />
+    </svg>
+  );
+}
+
+function MapIcon({ size = 18, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+      <line x1="9" x2="9" y1="3" y2="18" />
+      <line x1="15" x2="15" y1="6" y2="21" />
+    </svg>
+  );
+}
+
+function LocationPinIcon({ size = 18, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
+function ShieldCheckIcon({ size = 18, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  );
+}
+
+function FileTextIcon({ size = 18, className = "", style = {} }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+      <path d="M10 9H8" />
+      <path d="M16 13H8" />
+      <path d="M16 17H8" />
+    </svg>
+  );
+}
+
+function BarChartIcon({ size = 18, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <line x1="12" x2="12" y1="20" y2="10" />
+      <line x1="18" x2="18" y1="20" y2="4" />
+      <line x1="6" x2="6" y1="20" y2="16" />
+    </svg>
+  );
+}
+
+function LockIcon({ size = 18, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+function SproutIcon({ size = 20, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M7 20h10" />
+      <path d="M10 20c5.5-2.5.8-6.4 3-10" />
+      <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4.1 5.5.8z" />
+      <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
+    </svg>
+  );
+}
+
+function AlertTriangleIcon({ size = 20, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <line x1="12" x2="12" y1="9" y2="13" />
+      <line x1="12" x2="12.01" y1="17" y2="17" />
+    </svg>
+  );
+}
+
+function TrendingDownIcon({ size = 20, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+      <polyline points="16 17 22 17 22 11" />
+    </svg>
+  );
+}
+
+function SatelliteDishIcon({ size = 20, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M4 10a7.31 7.31 0 0 0 10 10" />
+      <path d="M4 6a11.37 11.37 0 0 0 14 14" />
+      <path d="M4 2a15.42 15.42 0 0 0 18 18" />
+      <line x1="4" x2="12" y1="22" y2="14" />
+    </svg>
+  );
+}
+
+function LogoutIcon({ size = 16, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" x2="9" y1="12" y2="12" />
+    </svg>
+  );
+}
+
 
 
 const districtsByState = {
@@ -91,9 +228,8 @@ function FitBoundsToDistrict({ bounds }) {
   return null;
 }
 
-// ---- Login / Register form ----
-function AuthForm({ mode, loading, error, onSubmit, t }) {
-  const isLogin = mode === "login";
+// ---- Login / Register / Forgot / Reset form ----
+function AuthForm({ mode, loading, error, successMsg, onSubmit, onSwitchMode, initialToken, t }) {
   const [values, setValues] = useState({
     name: "",
     phone: "",
@@ -103,7 +239,16 @@ function AuthForm({ mode, loading, error, onSubmit, t }) {
     confirm_password: "",
     state: "Maharashtra",
     district: "Nagpur",
+    token: initialToken || "",
+    new_password: "",
+    confirm_new_password: "",
   });
+
+  useEffect(() => {
+    if (initialToken) {
+      setValues((v) => ({ ...v, token: initialToken }));
+    }
+  }, [initialToken]);
 
   const set = (key) => (e) =>
     setValues((v) => ({ ...v, [key]: e.target.value }));
@@ -115,6 +260,108 @@ function AuthForm({ mode, loading, error, onSubmit, t }) {
     e.preventDefault();
     onSubmit(values);
   };
+
+  if (mode === "forgot") {
+    return (
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>{t("username")}</label>
+          <input
+            type="text"
+            value={values.username}
+            onChange={set("username")}
+            placeholder={t("usernamePlaceholder")}
+            required
+          />
+        </div>
+
+        {error && <div className="auth-error">{error}</div>}
+        {successMsg && (
+          <div className="auth-success" style={{ background: "#e8f5e9", color: "#1e4620", padding: "10px", borderRadius: "6px", marginBottom: "12px", fontSize: "13px" }}>
+            {successMsg}
+          </div>
+        )}
+
+        <button type="submit" className="analyze-button" disabled={loading}>
+          {loading ? t("loading") : t("sendResetToken")}
+        </button>
+
+        <div className="auth-switch" style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "8px", alignItems: "center" }}>
+          <button
+            type="button"
+            className="auth-link"
+            onClick={() => onSwitchMode("reset", values.token)}
+          >
+            {t("haveResetToken")}
+          </button>
+          <button
+            type="button"
+            className="auth-link"
+            onClick={() => onSwitchMode("login")}
+          >
+            ← {t("login")}
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  if (mode === "reset") {
+    return (
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>{t("resetToken")}</label>
+          <input
+            type="text"
+            value={values.token}
+            onChange={set("token")}
+            placeholder={t("resetTokenPlaceholder")}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label>{t("newPassword")}</label>
+          <input
+            type="password"
+            value={values.new_password}
+            onChange={set("new_password")}
+            placeholder={t("newPasswordPlaceholder")}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label>{t("confirmPassword")}</label>
+          <input
+            type="password"
+            value={values.confirm_new_password}
+            onChange={set("confirm_new_password")}
+            placeholder={t("confirmPasswordPlaceholder")}
+            required
+          />
+        </div>
+
+        {error && <div className="auth-error">{error}</div>}
+
+        <button type="submit" className="analyze-button" disabled={loading}>
+          {loading ? t("loading") : t("resetPassword")}
+        </button>
+
+        <div className="auth-switch" style={{ marginTop: "14px", textAlign: "center" }}>
+          <button
+            type="button"
+            className="auth-link"
+            onClick={() => onSwitchMode("login")}
+          >
+            ← {t("login")}
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  const isLogin = mode === "login";
 
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
@@ -211,6 +458,19 @@ function AuthForm({ mode, loading, error, onSubmit, t }) {
         />
       </div>
 
+      {isLogin && (
+        <div style={{ textAlign: "right", marginTop: "-4px", marginBottom: "10px" }}>
+          <button
+            type="button"
+            className="auth-link"
+            style={{ fontSize: "12px", background: "none", border: "none", cursor: "pointer", color: "#176b56", textDecoration: "underline" }}
+            onClick={() => onSwitchMode("forgot")}
+          >
+            {t("forgotPassword")}
+          </button>
+        </div>
+      )}
+
       {!isLogin && (
         <div className="form-group">
           <label>{t("confirmPassword")}</label>
@@ -273,7 +533,9 @@ function App() {
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
-  const [authMode, setAuthMode] = useState("login"); // "login" | "register"
+  const [authMode, setAuthMode] = useState("login"); // "login" | "register" | "forgot" | "reset"
+  const [resetToken, setResetToken] = useState("");
+  const [resetSuccessMsg, setResetSuccessMsg] = useState("");
 
   // ---- Profile edit state ----
   const [profileEditMode, setProfileEditMode] = useState(false);
@@ -386,6 +648,69 @@ function App() {
       await loadClaims();
     } catch (error) {
       setAuthError(error.message || t("registrationFailed"));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (username) => {
+    if (!username || !username.trim()) {
+      setAuthError(t("requiredFields"));
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError("");
+    setResetSuccessMsg("");
+    try {
+      const response = await fetch(`${API_BASE}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username.trim() }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          typeof data.detail === "string" ? data.detail : t("loginFailed")
+        );
+      }
+      setResetToken(data.token || "");
+      setResetSuccessMsg(data.token ? `${t("resetTokenSuccess")} [ ${data.token} ]` : t("resetTokenSuccess"));
+    } catch (error) {
+      setAuthError(error.message || t("loginFailed"));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (token, newPassword, confirmPassword) => {
+    if (!token || !token.trim() || !newPassword) {
+      setAuthError(t("tokenRequired"));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setAuthError(t("requiredFields"));
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError("");
+    try {
+      const response = await fetch(`${API_BASE}/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: token.trim(), new_password: newPassword }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          typeof data.detail === "string" ? data.detail : t("loginFailed")
+        );
+      }
+      alert(t("resetSuccess"));
+      setAuthMode("login");
+      setResetToken("");
+      setResetSuccessMsg("");
+    } catch (error) {
+      setAuthError(error.message || t("loginFailed"));
     } finally {
       setAuthLoading(false);
     }
@@ -742,7 +1067,7 @@ function App() {
         message:
           error instanceof Error
             ? error.message
-            : "Failed to submit insurance claim.",
+            : t("claimSubmitFailed"),
       });
     } finally {
       setClaimLoading(false);
@@ -784,7 +1109,7 @@ function App() {
         throw new Error(
           typeof data.detail === "string"
             ? data.detail
-            : "Unable to delete claim."
+            : t("cannotDeleteClaim")
         );
       }
 
@@ -793,7 +1118,7 @@ function App() {
       alert(
         error instanceof Error
           ? error.message
-          : "Unable to delete claim."
+          : t("cannotDeleteClaim")
       );
     }
   };
@@ -819,7 +1144,9 @@ function App() {
     <div className="app">
       <aside className="sidebar">
         <div className="logo">
-          <div className="logo-icon">🌾</div>
+          <div className="logo-icon">
+            <PlantEmblemIcon size={24} />
+          </div>
           <div>
             <h2>PMFBY</h2>
             <span>{t("cropDamageDetection")}</span>
@@ -840,7 +1167,8 @@ function App() {
             }`}
             onClick={() => setActivePage("dashboard")}
           >
-            <span>📊</span> {t("dashboard")}
+            <span className="nav-icon"><DashboardIcon /></span>
+            <span>{t("dashboard")}</span>
           </button>
 
           <button
@@ -849,7 +1177,8 @@ function App() {
             }`}
             onClick={() => setActivePage("analysis")}
           >
-            <span>🗺️</span> {t("damageAnalysis")}
+            <span className="nav-icon"><MapIcon /></span>
+            <span>{t("damageAnalysis")}</span>
           </button>
 
           <button
@@ -858,7 +1187,8 @@ function App() {
             }`}
             onClick={() => setActivePage("study")}
           >
-            <span>📍</span> {t("studyArea")}
+            <span className="nav-icon"><LocationPinIcon /></span>
+            <span>{t("studyArea")}</span>
           </button>
 
           <button
@@ -867,7 +1197,8 @@ function App() {
             }`}
             onClick={() => setActivePage("claim")}
           >
-            <span>🛡️</span> {t("insuranceClaim")}
+            <span className="nav-icon"><ShieldCheckIcon /></span>
+            <span>{t("insuranceClaim")}</span>
           </button>
 
           <button
@@ -876,8 +1207,20 @@ function App() {
             }`}
             onClick={() => setActivePage("reports")}
           >
-            <span>📄</span> {t("reports")}
+            <span className="nav-icon"><FileTextIcon /></span>
+            <span>{t("reports")}</span>
           </button>
+
+          <button
+            className={`nav-item ${
+              activePage === "aiml_performance" ? "active" : ""
+            }`}
+            onClick={() => setActivePage("aiml_performance")}
+          >
+            <span className="nav-icon"><BarChartIcon /></span>
+            <span>{t("aiMlPerformance")}</span>
+          </button>
+
 
           {!authUser && (
             <button
@@ -890,7 +1233,8 @@ function App() {
                 setActivePage("auth");
               }}
             >
-              <span>🔐</span> {t("loginRegister")}
+              <span className="nav-icon"><LockIcon /></span>
+              <span>{t("loginRegister")}</span>
             </button>
           )}
         </nav>
@@ -923,7 +1267,7 @@ function App() {
                 }}
                 title={t("logout")}
               >
-                ⎋
+                <LogoutIcon size={15} />
               </button>
             </div>
           ) : (
@@ -939,59 +1283,89 @@ function App() {
         {!authUser && activePage === "auth" && (
           <section className="auth-page">
             <div className="auth-card">
-              <div className="auth-logo">🌾</div>
+              <div className="auth-logo">
+                <PlantEmblemIcon size={38} />
+              </div>
               <h1 className="auth-title">
-                {authMode === "login" ? t("welcomeBack") : t("createAccount")}
+                {authMode === "login"
+                  ? t("welcomeBack")
+                  : authMode === "register"
+                  ? t("createAccount")
+                  : authMode === "forgot"
+                  ? t("forgotPasswordTitle")
+                  : t("resetPasswordTitle")}
               </h1>
               <p className="auth-subtitle">
                 {authMode === "login"
                   ? t("loginSubtitle")
-                  : t("registerSubtitle")}
+                  : authMode === "register"
+                  ? t("registerSubtitle")
+                  : authMode === "forgot"
+                  ? t("forgotPasswordSubtitle")
+                  : t("resetPasswordSubtitle")}
               </p>
 
               <AuthForm
                 mode={authMode}
                 loading={authLoading}
                 error={authError}
+                successMsg={resetSuccessMsg}
+                initialToken={resetToken}
                 t={t}
+                onSwitchMode={(nextMode, token) => {
+                  setAuthMode(nextMode);
+                  setAuthError("");
+                  setResetSuccessMsg("");
+                  if (token) setResetToken(token);
+                }}
                 onSubmit={async (values) => {
                   if (authMode === "login") {
                     await handleLogin(values.username, values.password);
-                  } else {
+                  } else if (authMode === "register") {
                     await handleRegister(values);
+                  } else if (authMode === "forgot") {
+                    await handleForgotPassword(values.username);
+                  } else if (authMode === "reset") {
+                    await handleResetPassword(values.token, values.new_password, values.confirm_new_password);
                   }
                 }}
               />
 
-              <div className="auth-switch">
-                {authMode === "login" ? (
+              {authMode === "login" && (
+                <div className="auth-switch">
                   <span>
-                    {t("noAccount")} {" "}
+                    {t("noAccount")}{" "}
                     <button
                       className="auth-link"
                       onClick={() => {
                         setAuthMode("register");
                         setAuthError("");
+                        setResetSuccessMsg("");
                       }}
                     >
                       {t("register")}
                     </button>
                   </span>
-                ) : (
+                </div>
+              )}
+
+              {authMode === "register" && (
+                <div className="auth-switch">
                   <span>
-                    {t("hasAccount")} {" "}
+                    {t("hasAccount")}{" "}
                     <button
                       className="auth-link"
                       onClick={() => {
                         setAuthMode("login");
                         setAuthError("");
+                        setResetSuccessMsg("");
                       }}
                     >
                       {t("login")}
                     </button>
                   </span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </section>
         )}
@@ -1397,10 +1771,6 @@ function App() {
                    <div className="form-group"><label>{t("farmLatitude")}</label><input type="number" step="any" value={farmLatitude} onChange={(e) => setFarmLatitude(e.target.value)} placeholder={t("latitudePlaceholder")} /></div>
                    <div className="form-group"><label>{t("farmLongitude")}</label><input type="number" step="any" value={farmLongitude} onChange={(e) => setFarmLongitude(e.target.value)} placeholder={t("longitudePlaceholder")} /></div>
                 </div>
-                <div className="form-group">
-                 <label>{t("farmPolygon")}</label>
-                 <textarea value={farmPolygon} onChange={(e) => setFarmPolygon(e.target.value)} placeholder={t("polygonPlaceholder")} rows="3" />
-                </div>
               </div>
 
               <div className="form-group">
@@ -1537,74 +1907,58 @@ function App() {
                     </div>
                   </div>
 
-                  {claimResult.evidence && (
-                    <div className="evidence-panel">
-                      <div className="evidence-panel-heading">
-                        <div><h2>{t("supportingEvidence")}</h2><p>{t("supportingEvidenceDescription")}</p></div>
-                        <strong className={`priority-pill ${claimResult.evidence.level}`}>{claimResult.evidence.priority_score}/100 · {claimResult.evidence.review_status}</strong>
-                      </div>
-                      <p className="human-review-note">{t("humanDecisionRequired")}</p>
-                      <div className="evidence-list">
-                        {(claimResult.evidence.factors || []).map((factor) => (
-                          <div className="evidence-row" key={factor.source}>
-                            <span className={factor.available ? "evidence-ready" : "evidence-pending"}>{factor.available ? t("available") : t("pending")}</span>
-                            <span>{factor.label}</span><strong>{String(factor.value)}</strong>
-                          </div>
-                        ))}
-                      </div>
-                      <h3>{t("priorityExplanation")}</h3>
-                      <ul>{(claimResult.evidence.explanations || []).map((item, index) => <li key={index}>{item}</li>)}</ul>
-                      <p className="provider-status">{claimResult.evidence.provider_status}</p>
-                    </div>
-                  )}
-
                   <div className="report-section conclusion-section claim-risk-section">
                     <h2>{t("claimRisk")}</h2>
-                    {claimResult.claim_verification?.model_used ? (
-                      <>
-                        {claimResult.claim_verification?.decision_type === "demo_ml" ? (
-                          <p className="claim-risk-model"><strong>{t("researchDemo")}</strong></p>
-                        ) : (
-                          <p className="claim-risk-model"><strong>{t("trainedMlModel")}</strong></p>
-                        )}
-                        <p className="claim-risk-model">
-                          <strong>{t("model")}:</strong>{" "}
-                          {claimResult.claim_verification.model_name ||
-                            "claim_risk_model"}
-                        </p>
-                        <p className="claim-risk-status">
-                          <strong>{t("status")}:</strong>{" "}
-                          {claimResult.claim_verification.review_status}
-                        </p>
-                        <p className="claim-risk-score">
-                          <strong>{t("claimRiskScore")}:</strong>{" "}
-                          {claimResult.claim_verification.claim_risk_score != null
-                            ? `${(Number(claimResult.claim_verification.claim_risk_score) * 100).toFixed(1)}%`
-                            : "—"}
-                        </p>
-                        <p className="human-review-note">
-                          {claimResult.claim_verification?.decision_type === "demo_ml"
-                            ? t("demoDisclaimer")
-                            : t("trainedModelTriage")}
-                          {" "}
-                          {t("humanOfficerDecision")}
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="claim-risk-status">
-                          <strong>{t("status")}:</strong> {t("modelNotReady")}
-                        </p>
-                        <p className="claim-risk-message">
-                          {claimResult.claim_verification?.reason ||
-                            claimResult.claim_verification?.message ||
-                            t("awaitingVerifiedClaims")}
-                        </p>
-                        <p className="human-review-note">
-                          {t("humanOfficerReview")}
-                        </p>
-                      </>
+                    <p className="claim-risk-status">
+                      <strong>{t("status")}:</strong>{" "}
+                      {claimResult.claim_verification?.review_status ||
+                        claimResult.evidence?.review_status ||
+                        t("pending")}
+                    </p>
+                    {claimResult.claim_verification?.claim_risk_score != null && (
+                      <p className="claim-risk-score">
+                        <strong>{t("claimRiskScore")}:</strong>{" "}
+                        {`${(Number(claimResult.claim_verification.claim_risk_score) * 100).toFixed(1)}%`}
+                      </p>
                     )}
+                    <p className="human-review-note">
+                      {t("humanOfficerDecision")}
+                    </p>
+
+                    {claimResult.evidence?.explanations &&
+                      claimResult.evidence.explanations.length > 0 && (
+                        <div style={{ marginTop: "14px" }}>
+                          <h3
+                            style={{
+                              fontSize: "15px",
+                              fontWeight: 700,
+                              color: "#16302a",
+                              margin: "12px 0 6px",
+                            }}
+                          >
+                            {t("priorityExplanation")}
+                          </h3>
+                          <ul
+                            style={{
+                              margin: "6px 0",
+                              paddingLeft: "20px",
+                              color: "#334155",
+                              fontSize: "14px",
+                            }}
+                          >
+                            {claimResult.evidence.explanations.map(
+                              (item, index) => (
+                                <li
+                                  key={index}
+                                  style={{ marginBottom: "4px" }}
+                                >
+                                  {item}
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      )}
                   </div>
 
                   <div className="report-section conclusion-section">
@@ -1617,7 +1971,7 @@ function App() {
 
                     {claimResult.claim_verification?.level === "normal" && (
                       <div className="claim-next-action normal-action">
-                        <h3>🟢 {t("normalReview")}</h3>
+                        <h3 className="claim-action-title normal"><span className="action-status-dot normal"></span> {t("normalReview")}</h3>
                         <p>{t("normalProcess")}</p>
 
                         <a
@@ -1639,7 +1993,7 @@ function App() {
 
                     {claimResult.claim_verification?.level === "medium" && (
                       <div className="claim-next-action medium-action">
-                        <h3>🟡 {t("mediumReview")}</h3>
+                        <h3 className="claim-action-title medium"><span className="action-status-dot medium"></span> {t("mediumReview")}</h3>
                         <p>{t("additionalVerification")}</p>
                         <strong>{t("status")}: {t("underVerification")}</strong>
                       </div>
@@ -1647,12 +2001,20 @@ function App() {
 
                     {claimResult.claim_verification?.level === "high" && (
                       <div className="claim-next-action high-action">
-                        <h3>🔴 {t("highReview")}</h3>
+                        <h3 className="claim-action-title high"><span className="action-status-dot high"></span> {t("highReview")}</h3>
                         <p>{t("detailedVerification")}</p>
                         <strong>{t("status")}: {t("highPriorityReview")}</strong>
                       </div>
                     )}
                   </div>
+
+                  {claimResult.weather_verification && (
+                    <WeatherVerificationCard
+                      weather={claimResult.weather_verification}
+                      t={t}
+                    />
+                  )}
+
                 </div>
               )}
             </div>
@@ -1705,7 +2067,7 @@ function App() {
                   <div className="claim-filters">
                     <input
                       type="text"
-                      placeholder={`🔍 ${t("searchClaims")}`}
+                      placeholder={t("searchClaims")}
                       value={claimSearch}
                       onChange={(e) => setClaimSearch(e.target.value)}
                       className="claim-search"
@@ -1827,8 +2189,10 @@ function App() {
                               <td style={{ padding: "12px" }}>
                                 {claim.riskModelUsed ? (
                                   <span>
-                                    {claim.riskModel === "claim_risk_demo_model" ? t("demoMl") : t("ml")} · {claim.riskModel || "claim_risk_model"}{" "}
-                                    · {claim.riskScore != null ? claim.riskScore : ""}
+                                    {t("ml")}
+                                    {claim.riskScore != null
+                                      ? ` · ${claim.riskScore}`
+                                      : ""}
                                   </span>
                                 ) : claim.rawReviewStatus ===
                                   "MODEL_NOT_READY" ? (
@@ -1866,6 +2230,7 @@ function App() {
             </div>
           </section>
         )}
+
 
         {activePage === "reports" && (
           <section className="reports-page">
@@ -1970,7 +2335,7 @@ function App() {
                   className="report-download-button"
                   onClick={() => window.print()}
                 >
-                  📄 {t("downloadReport")}
+                  <FileTextIcon size={16} style={{ verticalAlign: "-2px", marginRight: "6px" }} /> {t("downloadReport")}
                 </button>
               </div>
             ) : (
@@ -1986,6 +2351,10 @@ function App() {
               </div>
             )}
           </section>
+        )}
+
+        {activePage === "aiml_performance" && (
+          <AimlPerformance t={t} />
         )}
 
         {activePage === "analysis" && (
@@ -2095,12 +2464,16 @@ function App() {
                   {t("pmfbySatelliteAssessment")}
                 </p>
               </div>
-              <div className="location-icon">📍</div>
+              <div className="location-icon">
+                <LocationPinIcon size={24} />
+              </div>
             </section>
 
             <section className="stats-grid">
               <div className="stat-card">
-                <div className="stat-icon blue">🌱</div>
+                <div className="stat-icon blue">
+                  <SproutIcon size={22} />
+                </div>
                 <div>
                   <p>{t("totalCropland")}</p>
                   <h2>
@@ -2111,7 +2484,9 @@ function App() {
               </div>
 
               <div className="stat-card">
-                <div className="stat-icon red">⚠️</div>
+                <div className="stat-icon red">
+                  <AlertTriangleIcon size={22} />
+                </div>
                 <div>
                   <p>{t("potentialDamage")}</p>
                   <h2>
@@ -2122,7 +2497,9 @@ function App() {
               </div>
 
               <div className="stat-card">
-                <div className="stat-icon orange">📉</div>
+                <div className="stat-icon orange">
+                  <TrendingDownIcon size={22} />
+                </div>
                 <div>
                   <p>{t("damagePercentage")}</p>
                   <h2>
@@ -2135,7 +2512,9 @@ function App() {
               </div>
 
               <div className="stat-card">
-                <div className="stat-icon green">🛰️</div>
+                <div className="stat-icon green">
+                  <SatelliteDishIcon size={22} />
+                </div>
                 <div>
                   <p>{t("dataSource")}</p>
                   <h2>Sentinel-2</h2>
@@ -2253,7 +2632,7 @@ function App() {
                           className="report-button"
                           onClick={() => setActivePage("reports")}
                         >
-                          📄 {t("viewReport")}
+                          <FileTextIcon size={14} style={{ verticalAlign: "-2px", marginRight: "6px" }} /> {t("viewReport")}
                         </button>
                       )}
                     </div>
@@ -2264,7 +2643,13 @@ function App() {
           </>
         )}
       </main>
-      <Chatbot language={language} t={t} context={{ state: selectedState, district: selectedDistrict, page: activePage }} />
+      <Chatbot
+        language={language}
+        t={t}
+        context={{ state: selectedState, district: selectedDistrict, page: activePage }}
+        authUser={authUser}
+        token={getStoredToken()}
+      />
     </div>
   );
 }

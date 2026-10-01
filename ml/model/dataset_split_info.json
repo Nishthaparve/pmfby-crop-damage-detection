@@ -1,0 +1,17 @@
+{
+  "dataset_name": "PlantVillage",
+  "total_images": 54305,
+  "num_classes": 38,
+  "train_images": 43444,
+  "val_images": 5439,
+  "test_images": 5422,
+  "train_percent": 80.0,
+  "val_percent": 10.02,
+  "test_percent": 9.98,
+  "random_seed": 42,
+  "image_size": [
+    128,
+    128
+  ],
+  "channels": 3
+}
