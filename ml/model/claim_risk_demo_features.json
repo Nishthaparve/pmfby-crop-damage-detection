@@ -1,0 +1,41 @@
+{
+  "model_name": "claim_risk_demo_model",
+  "dataset_type": "synthetic/research demonstration",
+  "dataset_notice": "These labels are synthetic/research demonstration labels and are NOT officer-verified PMFBY claim labels.",
+  "feature_names": [
+    "claimed_loss",
+    "visual_heuristic_damage",
+    "loss_difference",
+    "farm_area",
+    "disease_model_confidence",
+    "photo_needs_review",
+    "field_location_present",
+    "event_type_present",
+    "crop_stage_present"
+  ],
+  "training_rows": 380,
+  "class_counts": {
+    "SUPPORTED": 190,
+    "INCONSISTENT": 190
+  },
+  "algorithm": "CalibratedClassifierCV(HistGradientBoostingClassifier, isotonic)",
+  "metrics": {
+    "precision": 0.9444,
+    "recall": 0.8947,
+    "f1": 0.9189,
+    "accuracy": 0.9211,
+    "roc_auc": 0.9792,
+    "confusion_matrix": [
+      [
+        36,
+        2
+      ],
+      [
+        4,
+        34
+      ]
+    ]
+  },
+  "score_meaning": "calibrated research-demo P(inconsistency); <0.35 NORMAL, >0.65 HIGH, otherwise MEDIUM",
+  "purpose": "human-review triage only; never approve, reject, or calculate a payout"
+}

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./App.css";
+import Chatbot from "./Chatbot";
+import { languages, translate } from "./i18n";
 
 // ---- Auth token helpers (JWT stored in localStorage) ----
 const API_BASE = "http://127.0.0.1:8000";
@@ -90,7 +92,7 @@ function FitBoundsToDistrict({ bounds }) {
 }
 
 // ---- Login / Register form ----
-function AuthForm({ mode, loading, error, onSubmit }) {
+function AuthForm({ mode, loading, error, onSubmit, t }) {
   const isLogin = mode === "login";
   const [values, setValues] = useState({
     name: "",
@@ -119,42 +121,42 @@ function AuthForm({ mode, loading, error, onSubmit }) {
       {!isLogin && (
         <>
           <div className="form-group">
-            <label>Full Name</label>
+            <label>{t("fullName")}</label>
             <input
               type="text"
               value={values.name}
               onChange={set("name")}
-              placeholder="Enter your full name"
+              placeholder={t("enterFullName")}
               required
             />
           </div>
 
           <div className="form-group">
-            <label>Phone Number</label>
+            <label>{t("phoneNumber")}</label>
             <input
               type="tel"
               value={values.phone}
               onChange={set("phone")}
-              placeholder="10-digit mobile number"
+              placeholder={t("phonePlaceholder")}
               pattern="[6-9][0-9]{9}"
               required
             />
           </div>
 
           <div className="form-group">
-            <label>Email</label>
+            <label>{t("email")}</label>
             <input
               type="email"
               value={values.email}
               onChange={set("email")}
-              placeholder="you@example.com"
+              placeholder={t("emailPlaceholder")}
               required
             />
           </div>
 
           <div className="auth-row">
             <div className="form-group">
-              <label>State</label>
+              <label>{t("state")}</label>
               <select
                 value={values.state}
                 onChange={(e) => {
@@ -174,7 +176,7 @@ function AuthForm({ mode, loading, error, onSubmit }) {
             </div>
 
             <div className="form-group">
-              <label>District</label>
+              <label>{t("district")}</label>
               <select value={values.district} onChange={set("district")}>
                 {districts.map((d) => (
                   <option key={d} value={d}>
@@ -188,35 +190,35 @@ function AuthForm({ mode, loading, error, onSubmit }) {
       )}
 
       <div className="form-group">
-        <label>Username</label>
+        <label>{t("username")}</label>
         <input
           type="text"
           value={values.username}
           onChange={set("username")}
-          placeholder="Choose a username"
+          placeholder={t("usernamePlaceholder")}
           required
         />
       </div>
 
       <div className="form-group">
-        <label>Password</label>
+        <label>{t("password")}</label>
         <input
           type="password"
           value={values.password}
           onChange={set("password")}
-          placeholder="At least 6 characters"
+          placeholder={t("passwordPlaceholder")}
           required
         />
       </div>
 
       {!isLogin && (
         <div className="form-group">
-          <label>Confirm Password</label>
+          <label>{t("confirmPassword")}</label>
           <input
             type="password"
             value={values.confirm_password}
             onChange={set("confirm_password")}
-            placeholder="Re-enter your password"
+            placeholder={t("confirmPasswordPlaceholder")}
             required
           />
         </div>
@@ -227,17 +229,19 @@ function AuthForm({ mode, loading, error, onSubmit }) {
       <button type="submit" className="analyze-button" disabled={loading}>
         {loading
           ? isLogin
-            ? "Logging in..."
-            : "Registering..."
+            ? t("loggingIn")
+            : t("registering")
           : isLogin
-          ? "Login"
-          : "Register"}
+          ? t("login")
+          : t("register")}
       </button>
     </form>
   );
 }
 
 function App() {
+  const [language, setLanguage] = useState(() => localStorage.getItem("preferredLanguage") || localStorage.getItem("pmfby_language") || "en");
+  const t = (key, values) => translate(language, key, values);
   const [selectedState, setSelectedState] = useState("Maharashtra");
   const [selectedDistrict, setSelectedDistrict] = useState("Nagpur");
   const [beforeStart, setBeforeStart] = useState("2025-06-01");
@@ -251,6 +255,13 @@ function App() {
   const [claimedLoss, setClaimedLoss] = useState("");
   const [farmArea, setFarmArea] = useState("");
   const [claimLocation, setClaimLocation] = useState("");
+  const [claimEventType, setClaimEventType] = useState("");
+  const [claimCropStage, setClaimCropStage] = useState("");
+  const [claimDate, setClaimDate] = useState(new Date().toISOString().slice(0, 10));
+  const [sowingDate, setSowingDate] = useState("");
+  const [farmLatitude, setFarmLatitude] = useState("");
+  const [farmLongitude, setFarmLongitude] = useState("");
+  const [farmPolygon, setFarmPolygon] = useState("");
   const [claimImage, setClaimImage] = useState(null);
   const [claimLoading, setClaimLoading] = useState(false);
   const [claimResult, setClaimResult] = useState(null);
@@ -270,6 +281,12 @@ function App() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState("");
 
+  const changeLanguage = (nextLanguage) => {
+    setLanguage(nextLanguage);
+    localStorage.setItem("preferredLanguage", nextLanguage);
+    localStorage.setItem("pmfby_language", nextLanguage);
+  };
+
   const loadClaims = async () => {
     try {
       const response = await fetch(`${API_BASE}/claims`, {
@@ -281,7 +298,7 @@ function App() {
         throw new Error(
           typeof data.detail === "string"
             ? data.detail
-            : "Failed to load insurance claims."
+            : t("loadClaimsFailed")
         );
       }
 
@@ -303,6 +320,9 @@ function App() {
         .then((r) => (r.ok ? r.json() : Promise.reject()))
         .then((data) => {
           setAuthUser(data.user || null);
+          if (data.user?.preferred_language && localStorage.getItem("preferredLanguage") == null) {
+            changeLanguage(data.user.preferred_language);
+          }
           if (data.user) loadClaims();
         })
         .catch(() => {
@@ -329,7 +349,7 @@ function App() {
         throw new Error(
           typeof data.detail === "string"
             ? data.detail
-            : "Login failed. Please try again."
+            : t("loginFailed")
         );
       }
       storeToken(data.token);
@@ -337,7 +357,7 @@ function App() {
       setActivePage("dashboard");
       await loadClaims();
     } catch (error) {
-      setAuthError(error.message || "Login failed.");
+      setAuthError(error.message || t("loginFailed"));
     } finally {
       setAuthLoading(false);
     }
@@ -357,7 +377,7 @@ function App() {
         throw new Error(
           typeof data.detail === "string"
             ? data.detail
-            : "Registration failed. Please try again."
+            : t("registrationFailed")
         );
       }
       storeToken(data.token);
@@ -365,7 +385,7 @@ function App() {
       setActivePage("dashboard");
       await loadClaims();
     } catch (error) {
-      setAuthError(error.message || "Registration failed.");
+      setAuthError(error.message || t("registrationFailed"));
     } finally {
       setAuthLoading(false);
     }
@@ -410,7 +430,7 @@ function App() {
       !profileForm.state ||
       !profileForm.district
     ) {
-      setProfileError("Please fill in all fields.");
+      setProfileError(t("requiredFields"));
       return;
     }
 
@@ -428,6 +448,7 @@ function App() {
           username: profileForm.username.trim(),
           state: profileForm.state,
           district: profileForm.district,
+          preferred_language: language,
         }),
       });
 
@@ -437,7 +458,7 @@ function App() {
         throw new Error(
           typeof data.detail === "string"
             ? data.detail
-            : "Failed to update profile."
+            : t("profileUpdateFailed")
         );
       }
 
@@ -447,7 +468,7 @@ function App() {
       setProfileEditMode(false);
       setProfileForm(null);
     } catch (error) {
-      setProfileError(error.message || "Failed to update profile.");
+      setProfileError(error.message || t("profileUpdateFailed"));
     } finally {
       setProfileSaving(false);
     }
@@ -556,14 +577,14 @@ function App() {
 
   const runAnalysis = async () => {
     if (!authUser) {
-      alert("Please login or register to use this feature.");
+      alert(t("loginRequired"));
       setAuthMode("login");
       setActivePage("auth");
       return;
     }
 
     if (!selectedState || !selectedDistrict) {
-      alert("Please select both State and District.");
+      alert(t("selectStateDistrict"));
       setActivePage("study");
       return;
     }
@@ -602,14 +623,14 @@ function App() {
       setResult(normalizeResult(data));
       setActivePage("dashboard");
     } catch (error) {
-      alert(`Analysis failed: ${error.message}`);
+      alert(t("analysisFailed", { message: error.message }));
     } finally {
       setLoading(false);
     }
   };
   const submitClaim = async () => {
     if (!authUser) {
-      alert("Please login or register to use this feature.");
+      alert(t("loginRequired"));
       setAuthMode("login");
       setActivePage("auth");
       return;
@@ -629,7 +650,7 @@ function App() {
       !selectedDistrict ||
       !claimImage
     ) {
-      alert("Please complete all claim fields and upload a crop image.");
+      alert(t("completeClaimFields"));
       return;
     }
 
@@ -645,6 +666,13 @@ function App() {
       formData.append("location", claimLocation.trim());
       formData.append("district", selectedDistrict);
       formData.append("state", selectedState);
+      formData.append("event_type", claimEventType);
+      formData.append("crop_stage", claimCropStage);
+      formData.append("claim_date", claimDate);
+      formData.append("sowing_date", sowingDate);
+      if (farmLatitude !== "") formData.append("latitude", farmLatitude);
+      if (farmLongitude !== "") formData.append("longitude", farmLongitude);
+      formData.append("farm_polygon", farmPolygon);
       formData.append("image", claimImage);
 
       const response = await fetch(`${API_BASE}/submit-claim`, {
@@ -685,24 +713,22 @@ function App() {
       const reviewStatus =
         data?.claim_verification?.review_status || "PENDING";
 
-      const upperStatus = String(reviewStatus)
-        .trim()
-        .toUpperCase();
+      const modelUsed =
+        data?.claim_verification?.model_used === true;
 
-      const level =
-        upperStatus.includes("NORMAL")
-          ? "normal"
-          : upperStatus.includes("MEDIUM")
-          ? "medium"
-          : upperStatus.includes("HIGH")
-          ? "high"
-          : null;
+      // The Normal/Medium/High triage level is shown ONLY when the trained
+      // claim-risk ML model produced it. When model_used is false the backend
+      // returns MODEL_NOT_READY and no fake Normal/Medium/High is shown.
+      const level = modelUsed
+        ? data?.claim_verification?.level || null
+        : null;
 
       setClaimResult({
         ...data,
         claim_verification: {
           ...(data.claim_verification || {}),
           review_status: reviewStatus,
+          model_used: modelUsed,
           level,
         },
       });
@@ -725,7 +751,7 @@ function App() {
 
   const deleteClaim = async (claimId) => {
     if (!authUser) {
-      alert("Please login or register to use this feature.");
+      alert(t("loginRequired"));
       setAuthMode("login");
       setActivePage("auth");
       return;
@@ -733,7 +759,7 @@ function App() {
 
     if (
       !window.confirm(
-        "Are you sure you want to delete this claim from history?"
+        t("deleteClaimConfirm")
       )
     ) {
       return;
@@ -796,9 +822,16 @@ function App() {
           <div className="logo-icon">🌾</div>
           <div>
             <h2>PMFBY</h2>
-            <span>Crop Damage Detection</span>
+            <span>{t("cropDamageDetection")}</span>
           </div>
         </div>
+
+        <label className="language-selector">
+          <span>{t("language")}</span>
+          <select value={language} onChange={(e) => changeLanguage(e.target.value)} aria-label={t("selectLanguage")}>
+            {languages.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+          </select>
+        </label>
 
         <nav className="nav-menu">
           <button
@@ -807,7 +840,7 @@ function App() {
             }`}
             onClick={() => setActivePage("dashboard")}
           >
-            <span>📊</span> Dashboard
+            <span>📊</span> {t("dashboard")}
           </button>
 
           <button
@@ -816,7 +849,7 @@ function App() {
             }`}
             onClick={() => setActivePage("analysis")}
           >
-            <span>🗺️</span> Damage Analysis
+            <span>🗺️</span> {t("damageAnalysis")}
           </button>
 
           <button
@@ -825,7 +858,7 @@ function App() {
             }`}
             onClick={() => setActivePage("study")}
           >
-            <span>📍</span> Study Area
+            <span>📍</span> {t("studyArea")}
           </button>
 
           <button
@@ -834,7 +867,7 @@ function App() {
             }`}
             onClick={() => setActivePage("claim")}
           >
-            <span>🛡️</span> Insurance Claim
+            <span>🛡️</span> {t("insuranceClaim")}
           </button>
 
           <button
@@ -843,7 +876,7 @@ function App() {
             }`}
             onClick={() => setActivePage("reports")}
           >
-            <span>📄</span> Reports
+            <span>📄</span> {t("reports")}
           </button>
 
           {!authUser && (
@@ -857,7 +890,7 @@ function App() {
                 setActivePage("auth");
               }}
             >
-              <span>🔐</span> Login / Register
+              <span>🔐</span> {t("loginRegister")}
             </button>
           )}
         </nav>
@@ -869,7 +902,7 @@ function App() {
               onClick={() => setActivePage("profile")}
               role="button"
               tabIndex={0}
-              title="View profile"
+              title={t("profile")}
             >
               <div className="user-avatar">
                 {String(authUser.name || authUser.username || "U")
@@ -879,7 +912,7 @@ function App() {
               <div className="user-meta">
                 <strong>{authUser.name || authUser.username}</strong>
                 <span>
-                  {authUser.district}, {authUser.state}
+                  {t(`place.${authUser.district}`)}, {t(`place.${authUser.state}`)}
                 </span>
               </div>
               <button
@@ -888,15 +921,15 @@ function App() {
                   e.stopPropagation();
                   handleLogout();
                 }}
-                title="Logout"
+                title={t("logout")}
               >
                 ⎋
               </button>
             </div>
           ) : (
             <>
-              <p>PMFBY Project</p>
-              <span>AI & Remote Sensing Based</span>
+               <p>{t("pmfbyProject")}</p>
+               <span>{t("aiRemoteSensing")}</span>
             </>
           )}
         </div>
@@ -908,18 +941,19 @@ function App() {
             <div className="auth-card">
               <div className="auth-logo">🌾</div>
               <h1 className="auth-title">
-                {authMode === "login" ? "Welcome Back" : "Create Account"}
+                {authMode === "login" ? t("welcomeBack") : t("createAccount")}
               </h1>
               <p className="auth-subtitle">
                 {authMode === "login"
-                  ? "Login to access PMFBY Crop Damage Detection"
-                  : "Register to start analyzing crop damage"}
+                  ? t("loginSubtitle")
+                  : t("registerSubtitle")}
               </p>
 
               <AuthForm
                 mode={authMode}
                 loading={authLoading}
                 error={authError}
+                t={t}
                 onSubmit={async (values) => {
                   if (authMode === "login") {
                     await handleLogin(values.username, values.password);
@@ -932,7 +966,7 @@ function App() {
               <div className="auth-switch">
                 {authMode === "login" ? (
                   <span>
-                    Don't have an account?{" "}
+                    {t("noAccount")} {" "}
                     <button
                       className="auth-link"
                       onClick={() => {
@@ -940,12 +974,12 @@ function App() {
                         setAuthError("");
                       }}
                     >
-                      Register
+                      {t("register")}
                     </button>
                   </span>
                 ) : (
                   <span>
-                    Already have an account?{" "}
+                    {t("hasAccount")} {" "}
                     <button
                       className="auth-link"
                       onClick={() => {
@@ -953,7 +987,7 @@ function App() {
                         setAuthError("");
                       }}
                     >
-                      Login
+                      {t("login")}
                     </button>
                   </span>
                 )}
@@ -967,15 +1001,15 @@ function App() {
             {authUser ? (
               <>
                 <div className="page-title">
-                  <h1>My Profile</h1>
-                  <p>Your PMFBY account details</p>
+                  <h1>{t("profile")}</h1>
+                  <p>{t("profileSubtitle")}</p>
                 </div>
 
                 <div className="study-form-card">
                   {!profileEditMode ? (
                     <>
                       <div className="form-group">
-                        <label>Name</label>
+                        <label>{t("fullName")}</label>
                         <input
                           type="text"
                           value={authUser.name || ""}
@@ -984,7 +1018,7 @@ function App() {
                       </div>
 
                       <div className="form-group">
-                        <label>Username</label>
+                        <label>{t("username")}</label>
                         <input
                           type="text"
                           value={authUser.username || ""}
@@ -993,7 +1027,7 @@ function App() {
                       </div>
 
                       <div className="form-group">
-                        <label>Email</label>
+                        <label>{t("email")}</label>
                         <input
                           type="text"
                           value={authUser.email || ""}
@@ -1002,7 +1036,7 @@ function App() {
                       </div>
 
                       <div className="form-group">
-                        <label>Phone</label>
+                        <label>{t("phoneNumber")}</label>
                         <input
                           type="text"
                           value={authUser.phone || ""}
@@ -1011,7 +1045,7 @@ function App() {
                       </div>
 
                       <div className="form-group">
-                        <label>State</label>
+                        <label>{t("state")}</label>
                         <input
                           type="text"
                           value={authUser.state || ""}
@@ -1020,7 +1054,7 @@ function App() {
                       </div>
 
                       <div className="form-group">
-                        <label>District</label>
+                        <label>{t("district")}</label>
                         <input
                           type="text"
                           value={authUser.district || ""}
@@ -1032,7 +1066,7 @@ function App() {
                         className="analyze-button"
                         onClick={startEditProfile}
                       >
-                        Edit Profile
+                        {t("editProfile")}
                       </button>
 
                       <button
@@ -1040,13 +1074,13 @@ function App() {
                         style={{ marginTop: "10px" }}
                         onClick={handleLogout}
                       >
-                        Logout
+                        {t("logout")}
                       </button>
                     </>
                   ) : (
                     <>
                       <div className="form-group">
-                        <label>Name</label>
+                          <label>{t("fullName")}</label>
                         <input
                           type="text"
                           value={profileForm.name}
@@ -1060,7 +1094,7 @@ function App() {
                       </div>
 
                       <div className="form-group">
-                        <label>Username</label>
+                          <label>{t("username")}</label>
                         <input
                           type="text"
                           value={profileForm.username}
@@ -1074,7 +1108,7 @@ function App() {
                       </div>
 
                       <div className="form-group">
-                        <label>Email</label>
+                          <label>{t("email")}</label>
                         <input
                           type="email"
                           value={profileForm.email}
@@ -1088,7 +1122,7 @@ function App() {
                       </div>
 
                       <div className="form-group">
-                        <label>Phone</label>
+                          <label>{t("phoneNumber")}</label>
                         <input
                           type="tel"
                           value={profileForm.phone}
@@ -1103,7 +1137,7 @@ function App() {
 
                       <div className="auth-row">
                         <div className="form-group">
-                          <label>State</label>
+                          <label>{t("state")}</label>
                           <select
                             value={profileForm.state}
                             onChange={(e) =>
@@ -1125,7 +1159,7 @@ function App() {
                         </div>
 
                         <div className="form-group">
-                          <label>District</label>
+                          <label>{t("district")}</label>
                           <select
                             value={profileForm.district}
                             onChange={(e) =>
@@ -1155,7 +1189,7 @@ function App() {
                         onClick={saveProfile}
                         disabled={profileSaving}
                       >
-                        {profileSaving ? "Saving..." : "Save Changes"}
+                        {profileSaving ? t("loading") : t("saveChanges")}
                       </button>
 
                       <button
@@ -1164,7 +1198,7 @@ function App() {
                         onClick={cancelEditProfile}
                         disabled={profileSaving}
                       >
-                        Cancel
+                        {t("cancel")}
                       </button>
                     </>
                   )}
@@ -1172,8 +1206,8 @@ function App() {
               </>
             ) : (
               <div className="page-title">
-                <h1>My Profile</h1>
-                <p>Please login or register to view your profile.</p>
+                <h1>{t("profile")}</h1>
+                <p>{t("profileLoginRequired")}</p>
               </div>
             )}
           </section>
@@ -1182,15 +1216,15 @@ function App() {
         {activePage === "study" && (
           <section className="study-page">
             <div className="page-title">
-              <h1>Select Study Area</h1>
+              <h1>{t("selectStudy")}</h1>
               <p>
-                Choose the location and time period for crop damage analysis
+                {t("studySubtitle")}
               </p>
             </div>
 
             <div className="study-form-card">
               <div className="form-group">
-                <label>Select State</label>
+                <label>{t("selectState")}</label>
                 <select
                   value={selectedState}
                   onChange={(e) => handleStateChange(e.target.value)}
@@ -1204,7 +1238,7 @@ function App() {
               </div>
 
               <div className="form-group">
-                <label>Select District</label>
+                <label>{t("selectDistrict")}</label>
                 <select
                   value={selectedDistrict}
                   onChange={(e) => handleDistrictChange(e.target.value)}
@@ -1212,7 +1246,7 @@ function App() {
                     !selectedState || availableDistricts.length === 0
                   }
                 >
-                  <option value="">Select District</option>
+                  <option value="">{t("selectDistrict")}</option>
                   {availableDistricts.map((district) => (
                     <option key={district} value={district}>
                       {district}
@@ -1221,11 +1255,11 @@ function App() {
                 </select>
               </div>
 
-              <h3>Before Event Period</h3>
+              <h3>{t("beforeEvent")}</h3>
 
               <div className="date-grid">
                 <div className="form-group">
-                  <label>Start Date</label>
+                  <label>{t("startDate")}</label>
                   <input
                     type="date"
                     value={beforeStart}
@@ -1234,7 +1268,7 @@ function App() {
                 </div>
 
                 <div className="form-group">
-                  <label>End Date</label>
+                  <label>{t("endDate")}</label>
                   <input
                     type="date"
                     value={beforeEnd}
@@ -1243,11 +1277,11 @@ function App() {
                 </div>
               </div>
 
-              <h3>After Event Period</h3>
+              <h3>{t("afterEvent")}</h3>
 
               <div className="date-grid">
                 <div className="form-group">
-                  <label>Start Date</label>
+                  <label>{t("startDate")}</label>
                   <input
                     type="date"
                     value={afterStart}
@@ -1256,7 +1290,7 @@ function App() {
                 </div>
 
                 <div className="form-group">
-                  <label>End Date</label>
+                  <label>{t("endDate")}</label>
                   <input
                     type="date"
                     value={afterEnd}
@@ -1271,8 +1305,8 @@ function App() {
                 disabled={loading}
               >
                 {loading
-                  ? "Analyzing..."
-                  : `Analyze ${selectedDistrict || "Study Area"}`}
+                  ? t("analyzing")
+                  : t("analyze", { district: selectedDistrict || t("studyArea") })}
               </button>
             </div>
           </section>
@@ -1281,27 +1315,27 @@ function App() {
         {activePage === "claim" && (
           <section className="study-page">
             <div className="page-title">
-              <h1>Submit Insurance Claim</h1>
+              <h1>{t("insuranceClaim")}</h1>
               <p>
-                Submit your claim directly for AI-assisted image analysis.
+                {t("claimSubtitle")}
               </p>
             </div>
 
             <div className="study-form-card">
-              <h3>Farmer Claim Details</h3>
+              <h3>{t("claimDetails")}</h3>
 
               <div className="form-group">
-                <label>Crop Name</label>
+                <label>{t("cropName")}</label>
                 <input
                   type="text"
                   value={claimCrop}
                   onChange={(e) => setClaimCrop(e.target.value)}
-                  placeholder="Example: Grape, Apple, Tomato"
+                  placeholder={t("exampleCrop")}
                 />
               </div>
 
               <div className="form-group">
-                <label>Claimed Crop Loss (%)</label>
+                <label>{t("claimedLoss")}</label>
                 <input
                   type="number"
                   min="0"
@@ -1309,34 +1343,68 @@ function App() {
                   step="0.01"
                   value={claimedLoss}
                   onChange={(e) => setClaimedLoss(e.target.value)}
-                  placeholder="Example: 40"
+                  placeholder={t("exampleLoss")}
                 />
               </div>
 
               <div className="form-group">
-                <label>Farm Area (Acres)</label>
+                <label>{t("farmArea")}</label>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={farmArea}
                   onChange={(e) => setFarmArea(e.target.value)}
-                  placeholder="Example: 2.5"
+                  placeholder={t("exampleArea")}
                 />
               </div>
 
               <div className="form-group">
-                <label>Farm Location / Village</label>
+                <label>{t("farmLocation")}</label>
                 <input
                   type="text"
                   value={claimLocation}
                   onChange={(e) => setClaimLocation(e.target.value)}
-                  placeholder="Enter village or farm location"
+                  placeholder={t("villagePlaceholder")}
                 />
               </div>
 
+              <div className="evidence-form-section">
+                 <h3>{t("evidenceForHumanReview")}</h3>
+                 <p>{t("evidenceDescription")}</p>
+                <div className="evidence-form-grid">
+                  <div className="form-group">
+                     <label>{t("claimEventType")}</label>
+                    <select value={claimEventType} onChange={(e) => setClaimEventType(e.target.value)}>
+                       <option value="">{t("selectEvent")}</option>
+                       <option value="Flood">{t("eventFlood")}</option>
+                       <option value="Drought">{t("eventDrought")}</option>
+                       <option value="Cyclone / storm">{t("eventCyclone")}</option>
+                       <option value="Pest / disease">{t("eventPestDisease")}</option>
+                       <option value="Hail / unseasonal rain">{t("eventHailRain")}</option>
+                       <option value="Other">{t("other")}</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                     <label>{t("cropStage")}</label>
+                    <select value={claimCropStage} onChange={(e) => setClaimCropStage(e.target.value)}>
+                       <option value="">{t("selectCropStage")}</option>
+                       <option value="Germination">{t("stageGermination")}</option><option value="Vegetative">{t("stageVegetative")}</option><option value="Flowering">{t("stageFlowering")}</option><option value="Harvest">{t("stageHarvest")}</option>
+                    </select>
+                  </div>
+                   <div className="form-group"><label>{t("claimDate")}</label><input type="date" value={claimDate} onChange={(e) => setClaimDate(e.target.value)} /></div>
+                   <div className="form-group"><label>{t("sowingDate")}</label><input type="date" value={sowingDate} onChange={(e) => setSowingDate(e.target.value)} /></div>
+                   <div className="form-group"><label>{t("farmLatitude")}</label><input type="number" step="any" value={farmLatitude} onChange={(e) => setFarmLatitude(e.target.value)} placeholder={t("latitudePlaceholder")} /></div>
+                   <div className="form-group"><label>{t("farmLongitude")}</label><input type="number" step="any" value={farmLongitude} onChange={(e) => setFarmLongitude(e.target.value)} placeholder={t("longitudePlaceholder")} /></div>
+                </div>
+                <div className="form-group">
+                 <label>{t("farmPolygon")}</label>
+                 <textarea value={farmPolygon} onChange={(e) => setFarmPolygon(e.target.value)} placeholder={t("polygonPlaceholder")} rows="3" />
+                </div>
+              </div>
+
               <div className="form-group">
-                <label>State</label>
+                <label>{t("state")}</label>
                 <select
                   value={selectedState}
                   onChange={(e) => handleStateChange(e.target.value)}
@@ -1350,13 +1418,13 @@ function App() {
               </div>
 
               <div className="form-group">
-                <label>District</label>
+                <label>{t("district")}</label>
                 <select
                   value={selectedDistrict}
                   onChange={(e) => handleDistrictChange(e.target.value)}
                   disabled={!selectedState || availableDistricts.length === 0}
                 >
-                  <option value="">Select District</option>
+                  <option value="">{t("selectDistrict")}</option>
                   {availableDistricts.map((district) => (
                     <option key={district} value={district}>
                       {district}
@@ -1366,7 +1434,7 @@ function App() {
               </div>
 
               <div className="form-group">
-                <label>Upload Crop Damage Image</label>
+                <label>{t("uploadImage")}</label>
                 <input
                   type="file"
                   accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -1377,7 +1445,7 @@ function App() {
 
                 {claimImage && (
                   <p style={{ marginTop: "10px" }}>
-                    Selected image: <strong>{claimImage.name}</strong>
+                     {t("selectedImage")}: <strong>{claimImage.name}</strong>
                   </p>
                 )}
               </div>
@@ -1389,8 +1457,8 @@ function App() {
                 disabled={claimLoading}
               >
                 {claimLoading
-                  ? "AI is Verifying Claim..."
-                  : "Submit Claim for Verification"}
+                  ? t("verifyingClaim")
+                  : t("submitClaim")}
               </button>
 
               {claimResult?.status === "error" && (
@@ -1399,7 +1467,7 @@ function App() {
                   style={{ marginTop: "30px" }}
                 >
                   <div className="report-section conclusion-section">
-                    <h2>Claim Submission Error</h2>
+                    <h2>{t("claimSubmissionError")}</h2>
                     <p>{claimResult.message}</p>
                   </div>
                 </div>
@@ -1412,21 +1480,21 @@ function App() {
                 >
                   <div className="report-card-header">
                     <div>
-                      <h2>AI Claim Verification Result</h2>
+                       <h2>{t("claimVerificationResult")}</h2>
                       <p>
-                        Actual trained-model prediction from the uploaded image
+                         {t("claimResultDescription")}
                       </p>
                     </div>
 
                     <span className="report-status">
                       {claimResult.claim_verification?.review_status ||
-                        "PENDING"}
+                        t("pending")}
                     </span>
                   </div>
 
                   <div className="report-results-grid">
                     <div className="report-result-box">
-                      <span>Farmer Claimed Loss</span>
+                       <span>{t("farmerClaimedLoss")}</span>
                       <strong>
                         {claimResult.farmer_claim
                           ?.claimed_loss_percentage ?? claimedLoss}
@@ -1435,28 +1503,28 @@ function App() {
                     </div>
 
                     <div className="report-result-box">
-                      <span>AI Disease Prediction</span>
+                      <span>{t("aiDisease")}</span>
                       <strong>
                         {claimResult.image_analysis
                           ?.predicted_crop_disease ||
-                          "Prediction unavailable"}
+                          t("predictionUnavailable")}
                       </strong>
                     </div>
 
                     <div className="report-result-box">
-                      <span>Model Confidence</span>
+                      <span>{t("modelConfidence")}</span>
                       <strong>
                         {claimResult.image_analysis
                           ?.model_confidence != null
                           ? `${Number(
                               claimResult.image_analysis.model_confidence
                             ).toFixed(2)}%`
-                          : "Unavailable"}
+                          : t("unavailable")}
                       </strong>
                     </div>
 
                     <div className="report-result-box">
-                      <span>AI Estimated Damage</span>
+                      <span>{t("visualEstimate")}</span>
                       <strong>
                         {claimResult.image_analysis
                           ?.estimated_damage_percentage != null
@@ -1464,26 +1532,93 @@ function App() {
                               claimResult.image_analysis
                                 .estimated_damage_percentage
                             ).toFixed(2)}%`
-                          : "Not available"}
+                          : t("notAvailable")}
                       </strong>
                     </div>
                   </div>
 
+                  {claimResult.evidence && (
+                    <div className="evidence-panel">
+                      <div className="evidence-panel-heading">
+                        <div><h2>{t("supportingEvidence")}</h2><p>{t("supportingEvidenceDescription")}</p></div>
+                        <strong className={`priority-pill ${claimResult.evidence.level}`}>{claimResult.evidence.priority_score}/100 · {claimResult.evidence.review_status}</strong>
+                      </div>
+                      <p className="human-review-note">{t("humanDecisionRequired")}</p>
+                      <div className="evidence-list">
+                        {(claimResult.evidence.factors || []).map((factor) => (
+                          <div className="evidence-row" key={factor.source}>
+                            <span className={factor.available ? "evidence-ready" : "evidence-pending"}>{factor.available ? t("available") : t("pending")}</span>
+                            <span>{factor.label}</span><strong>{String(factor.value)}</strong>
+                          </div>
+                        ))}
+                      </div>
+                      <h3>{t("priorityExplanation")}</h3>
+                      <ul>{(claimResult.evidence.explanations || []).map((item, index) => <li key={index}>{item}</li>)}</ul>
+                      <p className="provider-status">{claimResult.evidence.provider_status}</p>
+                    </div>
+                  )}
+
+                  <div className="report-section conclusion-section claim-risk-section">
+                    <h2>{t("claimRisk")}</h2>
+                    {claimResult.claim_verification?.model_used ? (
+                      <>
+                        {claimResult.claim_verification?.decision_type === "demo_ml" ? (
+                          <p className="claim-risk-model"><strong>{t("researchDemo")}</strong></p>
+                        ) : (
+                          <p className="claim-risk-model"><strong>{t("trainedMlModel")}</strong></p>
+                        )}
+                        <p className="claim-risk-model">
+                          <strong>{t("model")}:</strong>{" "}
+                          {claimResult.claim_verification.model_name ||
+                            "claim_risk_model"}
+                        </p>
+                        <p className="claim-risk-status">
+                          <strong>{t("status")}:</strong>{" "}
+                          {claimResult.claim_verification.review_status}
+                        </p>
+                        <p className="claim-risk-score">
+                          <strong>{t("claimRiskScore")}:</strong>{" "}
+                          {claimResult.claim_verification.claim_risk_score != null
+                            ? `${(Number(claimResult.claim_verification.claim_risk_score) * 100).toFixed(1)}%`
+                            : "—"}
+                        </p>
+                        <p className="human-review-note">
+                          {claimResult.claim_verification?.decision_type === "demo_ml"
+                            ? t("demoDisclaimer")
+                            : t("trainedModelTriage")}
+                          {" "}
+                          {t("humanOfficerDecision")}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="claim-risk-status">
+                          <strong>{t("status")}:</strong> {t("modelNotReady")}
+                        </p>
+                        <p className="claim-risk-message">
+                          {claimResult.claim_verification?.reason ||
+                            claimResult.claim_verification?.message ||
+                            t("awaitingVerifiedClaims")}
+                        </p>
+                        <p className="human-review-note">
+                          {t("humanOfficerReview")}
+                        </p>
+                      </>
+                    )}
+                  </div>
+
                   <div className="report-section conclusion-section">
-                    <h2>Review Decision</h2>
+                    <h2>{t("reviewDecision")}</h2>
 
                     <p>
                       {claimResult.claim_verification?.reason ||
-                        "No review reason returned."}
+                        t("noReviewReason")}
                     </p>
 
                     {claimResult.claim_verification?.level === "normal" && (
                       <div className="claim-next-action normal-action">
-                        <h3>🟢 Normal Review</h3>
-                        <p>
-                          Your claim can continue through the normal PMFBY
-                          process.
-                        </p>
+                        <h3>🟢 {t("normalReview")}</h3>
+                        <p>{t("normalProcess")}</p>
 
                         <a
                           href="https://pmfby.gov.in/"
@@ -1497,32 +1632,24 @@ function App() {
                             textAlign: "center",
                           }}
                         >
-                          Continue to Official PMFBY Portal →
+                          {t("continueToPortal")} →
                         </a>
                       </div>
                     )}
 
                     {claimResult.claim_verification?.level === "medium" && (
                       <div className="claim-next-action medium-action">
-                        <h3>🟡 Medium Review</h3>
-                        <p>
-                          Additional verification is required before the claim
-                          proceeds.
-                        </p>
-                        <strong>Status: Under Verification</strong>
+                        <h3>🟡 {t("mediumReview")}</h3>
+                        <p>{t("additionalVerification")}</p>
+                        <strong>{t("status")}: {t("underVerification")}</strong>
                       </div>
                     )}
 
                     {claimResult.claim_verification?.level === "high" && (
                       <div className="claim-next-action high-action">
-                        <h3>🔴 High Review</h3>
-                        <p>
-                          Detailed manual verification is required before the
-                          claim proceeds.
-                        </p>
-                        <strong>
-                          Status: High-Priority Manual Review Required
-                        </strong>
+                        <h3>🔴 {t("highReview")}</h3>
+                        <p>{t("detailedVerification")}</p>
+                        <strong>{t("status")}: {t("highPriorityReview")}</strong>
                       </div>
                     )}
                   </div>
@@ -1536,39 +1663,39 @@ function App() {
             >
               <div className="report-card-header">
                 <div>
-                  <h2>Insurance Claim History</h2>
-                  <p>Claims stored in the backend database</p>
+                  <h2>{t("claimHistory")}</h2>
+                  <p>{t("claimsStored")}</p>
                 </div>
               </div>
 
               {!authUser ? (
                 <div className="report-section">
-                  <p>Please login or register to view your claim history.</p>
+                  <p>{t("loginToHistory")}</p>
                 </div>
               ) : (
                 <>
                   <div className="claim-statistics">
                     <div className="stat-card">
-                      <span className="stat-label">Total Claims</span>
+                      <span className="stat-label">{t("totalClaims")}</span>
                       <strong className="stat-value">{totalClaims}</strong>
                     </div>
 
                     <div className="stat-card">
-                      <span className="stat-label">Normal Review</span>
+                      <span className="stat-label">{t("normalReview")}</span>
                       <strong className="stat-value">
                         {normalReviewClaims}
                       </strong>
                     </div>
 
                     <div className="stat-card">
-                      <span className="stat-label">Medium Review</span>
+                      <span className="stat-label">{t("mediumReview")}</span>
                       <strong className="stat-value">
                         {mediumReviewClaims}
                       </strong>
                     </div>
 
                     <div className="stat-card">
-                      <span className="stat-label">High Review</span>
+                      <span className="stat-label">{t("highReview")}</span>
                       <strong className="stat-value">
                         {highReviewClaims}
                       </strong>
@@ -1578,7 +1705,7 @@ function App() {
                   <div className="claim-filters">
                     <input
                       type="text"
-                      placeholder="🔍 Search by crop, location, district, state, or disease..."
+                      placeholder={`🔍 ${t("searchClaims")}`}
                       value={claimSearch}
                       onChange={(e) => setClaimSearch(e.target.value)}
                       className="claim-search"
@@ -1591,10 +1718,10 @@ function App() {
                       }
                       className="claim-status-filter"
                     >
-                      <option value="ALL">All Statuses</option>
-                      <option value="NORMAL REVIEW">Normal Review</option>
-                      <option value="MEDIUM REVIEW">Medium Review</option>
-                      <option value="HIGH REVIEW">High Review</option>
+                      <option value="ALL">{t("allStatuses")}</option>
+                      <option value="NORMAL REVIEW">{t("normalReview")}</option>
+                      <option value="MEDIUM REVIEW">{t("mediumReview")}</option>
+                      <option value="HIGH REVIEW">{t("highReview")}</option>
                     </select>
                   </div>
 
@@ -1602,8 +1729,8 @@ function App() {
                     <div className="report-section">
                       <p>
                         {normalizedHistory.length === 0
-                          ? "No insurance claims have been submitted yet."
-                          : "No claims match your search or selected status."}
+                          ? t("noClaims")
+                          : t("noMatchingClaims")}
                       </p>
                     </div>
                   ) : (
@@ -1618,25 +1745,28 @@ function App() {
                         <thead>
                           <tr>
                             <th style={{ padding: "12px", textAlign: "left" }}>
-                              Crop
+                              {t("crop")}
                             </th>
                             <th style={{ padding: "12px", textAlign: "left" }}>
-                              Claimed Loss
+                              {t("claimedLoss")}
                             </th>
                             <th style={{ padding: "12px", textAlign: "left" }}>
-                              AI Damage
+                              {t("visualEstimate")}
                             </th>
                             <th style={{ padding: "12px", textAlign: "left" }}>
-                              AI Prediction
+                              {t("aiPrediction")}
                             </th>
                             <th style={{ padding: "12px", textAlign: "left" }}>
-                              Confidence
+                              {t("modelConfidence")}
                             </th>
                             <th style={{ padding: "12px", textAlign: "left" }}>
-                              Status
+                              {t("status")}
                             </th>
                             <th style={{ padding: "12px", textAlign: "left" }}>
-                              Action
+                              {t("mlTriage")}
+                            </th>
+                            <th style={{ padding: "12px", textAlign: "left" }}>
+                              {t("action")}
                             </th>
                           </tr>
                         </thead>
@@ -1685,7 +1815,27 @@ function App() {
                                   fontWeight: "600",
                                 }}
                               >
-                                {claim.status || "PENDING"}
+                                {claim.status === "NORMAL REVIEW"
+                                  ? t("normalReview")
+                                  : claim.status === "MEDIUM REVIEW"
+                                  ? t("mediumReview")
+                                  : claim.status === "HIGH REVIEW"
+                                  ? t("highReview")
+                                  : claim.status || t("pending")}
+                              </td>
+
+                              <td style={{ padding: "12px" }}>
+                                {claim.riskModelUsed ? (
+                                  <span>
+                                    {claim.riskModel === "claim_risk_demo_model" ? t("demoMl") : t("ml")} · {claim.riskModel || "claim_risk_model"}{" "}
+                                    · {claim.riskScore != null ? claim.riskScore : ""}
+                                  </span>
+                                ) : claim.rawReviewStatus ===
+                                  "MODEL_NOT_READY" ? (
+                                  <span>{t("modelPendingReview")}</span>
+                                ) : (
+                                  <span>—</span>
+                                )}
                               </td>
 
                               <td style={{ padding: "12px" }}>
@@ -1702,7 +1852,7 @@ function App() {
                                     fontWeight: "600",
                                   }}
                                 >
-                                  Delete
+                                  {t("delete")}
                                 </button>
                               </td>
                             </tr>
@@ -1720,29 +1870,29 @@ function App() {
         {activePage === "reports" && (
           <section className="reports-page">
             <div className="page-title">
-              <h1>Analysis Reports</h1>
-              <p>View and download crop damage assessment reports</p>
+              <h1>{t("analysisReports")}</h1>
+              <p>{t("reportsSubtitle")}</p>
             </div>
 
             {result ? (
               <div className="report-card">
                 <div className="report-header">
-                  <h1>PMFBY Crop Damage Assessment Report</h1>
-                  <p>AI & Remote Sensing Based Crop Damage Analysis</p>
+                  <h1>{t("assessmentReport")}</h1>
+                  <p>{t("remoteSensingAnalysis")}</p>
                   <div className="report-line"></div>
                 </div>
 
                 <div className="report-section">
-                  <h2>1. Study Area</h2>
+                  <h2>{t("reportStudyArea")}</h2>
                   <div className="report-info-grid">
                     <div className="report-info-item">
-                      <span>District</span>
+                      <span>{t("district")}</span>
                       <strong>
                         {result.study_area?.district || selectedDistrict}
                       </strong>
                     </div>
                     <div className="report-info-item">
-                      <span>State</span>
+                      <span>{t("state")}</span>
                       <strong>
                         {result.study_area?.state || selectedState}
                       </strong>
@@ -1751,17 +1901,17 @@ function App() {
                 </div>
 
                 <div className="report-section">
-                  <h2>2. Analysis Period</h2>
+                  <h2>{t("analysisPeriod")}</h2>
                   <div className="report-info-grid">
                     <div className="report-info-item">
-                      <span>Before Event</span>
+                      <span>{t("beforeEvent")}</span>
                       <strong>
                         {result.periods?.before?.start || beforeStart} to{" "}
                         {result.periods?.before?.end || beforeEnd}
                       </strong>
                     </div>
                     <div className="report-info-item">
-                      <span>After Event</span>
+                      <span>{t("afterEvent")}</span>
                       <strong>
                         {result.periods?.after?.start || afterStart} to{" "}
                         {result.periods?.after?.end || afterEnd}
@@ -1771,34 +1921,34 @@ function App() {
                 </div>
 
                 <div className="report-section">
-                  <h2>3. Crop Damage Analysis Results</h2>
+                  <h2>{t("damageResults")}</h2>
                   <div className="report-results-grid">
                     <div className="report-result-box">
-                      <span>Total Cropland</span>
+                      <span>{t("totalCropland")}</span>
                       <strong>{totalArea} ha</strong>
                     </div>
                     <div className="report-result-box">
-                      <span>Potential Damaged Area</span>
+                      <span>{t("potentialDamagedArea")}</span>
                       <strong>{damagedArea} ha</strong>
                     </div>
                     <div className="report-result-box">
-                      <span>Damage Percentage</span>
+                      <span>{t("damagePercentage")}</span>
                       <strong>{damagePercentage}%</strong>
                     </div>
                   </div>
                 </div>
 
                 <div className="report-section">
-                  <h2>4. Satellite Data</h2>
+                  <h2>{t("satelliteData")}</h2>
                   <div className="report-info-grid">
                     <div className="report-info-item">
-                      <span>Satellite Source</span>
+                      <span>{t("satelliteSource")}</span>
                       <strong>
                         {result.satellite_data?.source || "Sentinel-2"}
                       </strong>
                     </div>
                     <div className="report-info-item">
-                      <span>Analysis Platform</span>
+                      <span>{t("analysisPlatform")}</span>
                       <strong>
                         {result.satellite_data?.platform ||
                           "Google Earth Engine"}
@@ -1808,41 +1958,30 @@ function App() {
                 </div>
 
                 <div className="report-section conclusion-section">
-                  <h2>5. Assessment Conclusion</h2>
-                  <p>
-                    The analysis identified approximately{" "}
-                    <strong>{damagedArea} hectares</strong> of potential crop
-                    damage, representing{" "}
-                    <strong>{damagePercentage}%</strong> of the analyzed
-                    cropland area.
-                  </p>
+                  <h2>{t("assessmentConclusion")}</h2>
+                  <p>{t("assessmentConclusionText", { damagedArea, damagePercentage })}</p>
                 </div>
 
                 <div className="report-disclaimer">
-                  <strong>Disclaimer:</strong> Results represent potential
-                  vegetation loss based on satellite-derived analysis and
-                  should be verified through field assessment before final
-                  insurance decisions.
+                  <strong>{t("disclaimer")}:</strong> {t("reportDisclaimer")}
                 </div>
 
                 <button
                   className="report-download-button"
                   onClick={() => window.print()}
                 >
-                  📄 Download Report
+                  📄 {t("downloadReport")}
                 </button>
               </div>
             ) : (
               <div className="no-report">
-                <h2>No Analysis Report Yet</h2>
-                <p>
-                  Run the crop damage analysis first to generate a report.
-                </p>
+                <h2>{t("noReport")}</h2>
+                <p>{t("noReportDescription")}</p>
                 <button
                   className="analyze-button"
                   onClick={() => setActivePage("study")}
                 >
-                  Go to Study Area
+                  {t("goToStudyArea")}
                 </button>
               </div>
             )}
@@ -1852,52 +1991,49 @@ function App() {
         {activePage === "analysis" && (
           <section className="reports-page">
             <div className="page-title">
-              <h1>Damage Analysis</h1>
-              <p>
-                NDVI-based crop damage assessment using Sentinel-2 satellite
-                imagery
-              </p>
+              <h1>{t("damageAnalysis")}</h1>
+              <p>{t("ndviDescription")}</p>
             </div>
 
             <div className="report-card">
               <div className="report-card-header">
                 <div>
-                  <h2>Analysis Status</h2>
+                  <h2>{t("analysisStatus")}</h2>
                   <p>
                     {loading
-                      ? "Satellite data is being processed..."
+                      ? t("satelliteProcessing")
                       : result
-                      ? "Analysis completed successfully"
-                      : "Ready to start analysis"}
+                      ? t("analysisCompleted")
+                      : t("analysisReady")}
                   </p>
                 </div>
                 <span className="report-status">
-                  {loading ? "Processing" : result ? "Completed" : "Ready"}
+                  {loading ? t("processing") : result ? t("completed") : t("ready")}
                 </span>
               </div>
 
               <div className="report-summary-grid">
                 <div>
-                  <span>Study Area</span>
+                  <span>{t("studyArea")}</span>
                   <strong>
                     {selectedDistrict}, {selectedState}
                   </strong>
                 </div>
                 <div>
-                  <span>Before Event</span>
+                  <span>{t("beforeEvent")}</span>
                   <strong>
                     {beforeStart} to {beforeEnd}
                   </strong>
                 </div>
                 <div>
-                  <span>After Event</span>
+                  <span>{t("afterEvent")}</span>
                   <strong>
                     {afterStart} to {afterEnd}
                   </strong>
                 </div>
                 <div>
-                  <span>Method</span>
-                  <strong>NDVI Change Detection</strong>
+                  <span>{t("method")}</span>
+                  <strong>{t("ndviChangeDetection")}</strong>
                 </div>
               </div>
 
@@ -1907,8 +2043,8 @@ function App() {
                 className="analyze-button"
               >
                 {loading
-                  ? "Analyzing..."
-                  : `Analyze ${selectedDistrict}`}
+                  ? t("analyzing")
+                  : t("analyze", { district: selectedDistrict })}
               </button>
             </div>
           </section>
@@ -1918,9 +2054,9 @@ function App() {
           <>
             <header className="header">
               <div>
-                <h1>Crop Damage Detection Dashboard</h1>
+                <h1>{t("cropDamageDashboard")}</h1>
                 <p>
-                  Satellite-based analysis for identifying potential crop damage
+                  {t("satelliteAnalysis")}
                 </p>
               </div>
 
@@ -1928,10 +2064,10 @@ function App() {
                 <div className="status">
                   <span className="status-dot"></span>
                   {loading
-                    ? "Analyzing..."
+                    ? t("analyzing")
                     : result
-                    ? "Analysis Complete"
-                    : "Analysis Ready"}
+                    ? t("analysisComplete")
+                    : t("analysisReady")}
                 </div>
 
                 <button
@@ -1940,20 +2076,23 @@ function App() {
                   className="analyze-button"
                 >
                   {loading
-                    ? "Analyzing..."
-                    : `Analyze ${selectedDistrict}`}
+                    ? t("analyzing")
+                    : t("analyze", { district: selectedDistrict })}
                 </button>
               </div>
             </header>
 
             <section className="study-banner">
               <div>
-                <p className="section-label">STUDY AREA</p>
+                <p className="section-label">{t("studyArea")}</p>
                 <h2>
-                  {selectedDistrict} District, {selectedState}
+                  {t("locationTitle", {
+                    district: t(`place.${selectedDistrict}`),
+                    state: t(`place.${selectedState}`),
+                  })}
                 </h2>
                 <p>
-                  PMFBY Crop Damage Assessment using Sentinel-2 Satellite Data
+                  {t("pmfbySatelliteAssessment")}
                 </p>
               </div>
               <div className="location-icon">📍</div>
@@ -1963,42 +2102,42 @@ function App() {
               <div className="stat-card">
                 <div className="stat-icon blue">🌱</div>
                 <div>
-                  <p>Total Cropland</p>
+                  <p>{t("totalCropland")}</p>
                   <h2>
                     {totalArea !== "—" ? `${totalArea} ha` : "—"}
                   </h2>
-                  <span>Satellite derived</span>
+                  <span>{t("satelliteDerived")}</span>
                 </div>
               </div>
 
               <div className="stat-card">
                 <div className="stat-icon red">⚠️</div>
                 <div>
-                  <p>Potential Damage</p>
+                  <p>{t("potentialDamage")}</p>
                   <h2>
                     {damagedArea !== "—" ? `${damagedArea} ha` : "—"}
                   </h2>
-                  <span>NDVI based detection</span>
+                  <span>{t("ndviDetection")}</span>
                 </div>
               </div>
 
               <div className="stat-card">
                 <div className="stat-icon orange">📉</div>
                 <div>
-                  <p>Damage Percentage</p>
+                  <p>{t("damagePercentage")}</p>
                   <h2>
                     {damagePercentage !== "—"
                       ? `${damagePercentage}%`
                       : "—"}
                   </h2>
-                  <span>Estimated affected area</span>
+                  <span>{t("estimatedAffectedArea")}</span>
                 </div>
               </div>
 
               <div className="stat-card">
                 <div className="stat-icon green">🛰️</div>
                 <div>
-                  <p>Data Source</p>
+                  <p>{t("dataSource")}</p>
                   <h2>Sentinel-2</h2>
                   <span>Google Earth Engine</span>
                 </div>
@@ -2009,10 +2148,10 @@ function App() {
               <div className="card map-card">
                 <div className="card-header">
                   <div>
-                    <h2>Crop Damage Map</h2>
-                    <p>{selectedDistrict} crop damage analysis</p>
+                    <h2>{t("cropDamageMap")}</h2>
+                    <p>{t("districtDamageAnalysis", { district: selectedDistrict })}</p>
                   </div>
-                  <span className="map-badge">NDVI Analysis</span>
+                  <span className="map-badge">{t("ndviAnalysis")}</span>
                 </div>
 
                 <div className="map-placeholder">
@@ -2052,7 +2191,7 @@ function App() {
                     </MapContainer>
                   ) : (
                     <div className="map-empty">
-                      {`Click "Analyze ${selectedDistrict}" to generate the crop damage map`}
+                      {t("generateMap", { district: selectedDistrict })}
                     </div>
                   )}
                 </div>
@@ -2060,11 +2199,11 @@ function App() {
                 <div className="map-legend">
                   <span>
                     <i className="legend-box healthy"></i>
-                    Healthy Vegetation
+                    {t("healthyVegetation")}
                   </span>
                   <span>
                     <i className="legend-box damage"></i>
-                    Potential Damage
+                    {t("potentialDamage")}
                   </span>
                 </div>
               </div>
@@ -2072,17 +2211,14 @@ function App() {
               <div className="card analysis-card">
                 <div className="card-header">
                   <div>
-                    <h2>Analysis Summary</h2>
-                    <p>Current processing workflow</p>
+                    <h2>{t("analysisSummary")}</h2>
+                    <p>{t("processingWorkflow")}</p>
                   </div>
                 </div>
 
                 <div className="steps">
                   {[
-                    "Satellite Data Collection",
-                    "NDVI Calculation",
-                    "Damage Detection",
-                    "Refined Analysis",
+                    t("satelliteDataCollection"), t("ndviCalculation"), t("damageDetection"), t("refinedAnalysis"),
                   ].map((step, index) => (
                     <div className="step completed" key={step}>
                       <div className="step-number">✓</div>
@@ -2090,12 +2226,12 @@ function App() {
                         <h3>{step}</h3>
                         <p>
                           {index === 0
-                            ? "Sentinel-2 images collected"
+                            ? t("sentinelCollected")
                             : index === 1
-                            ? "Before and after vegetation comparison"
+                            ? t("vegetationComparison")
                             : index === 2
-                            ? "Potential vegetation loss identified"
-                            : "Cropland masking and noise reduction"}
+                            ? t("vegetationLossIdentified")
+                            : t("croplandMasking")}
                         </p>
                       </div>
                     </div>
@@ -2106,18 +2242,18 @@ function App() {
                       {result ? "✓" : "5"}
                     </div>
                     <div>
-                      <h3>Final Report</h3>
+                      <h3>{t("finalReport")}</h3>
                       <p>
                         {result
-                          ? "Results and damage summary generated"
-                          : "Results and damage summary"}
+                          ? t("resultsGenerated")
+                          : t("resultsSummary")}
                       </p>
                       {result && (
                         <button
                           className="report-button"
                           onClick={() => setActivePage("reports")}
                         >
-                          📄 View Report
+                          📄 {t("viewReport")}
                         </button>
                       )}
                     </div>
@@ -2128,6 +2264,7 @@ function App() {
           </>
         )}
       </main>
+      <Chatbot language={language} t={t} context={{ state: selectedState, district: selectedDistrict, page: activePage }} />
     </div>
   );
 }

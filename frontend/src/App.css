@@ -2137,3 +2137,51 @@ button {
 .auth-link:hover {
   text-decoration: underline;
 }
+
+/* Explainable claim-evidence workflow */
+.evidence-form-section, .evidence-panel {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid #d8e5df;
+  border-radius: 14px;
+  background: #f7fbf8;
+}
+.evidence-form-section h3, .evidence-panel h2 { color: #155c4a; margin: 0 0 7px; }
+.evidence-form-section > p, .human-review-note, .provider-status { color: #526c63; font-size: 14px; margin: 0 0 16px; }
+.evidence-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.evidence-form-section textarea { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid #cbd5d1; border-radius: 8px; padding: 10px; font: inherit; }
+.evidence-panel-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.priority-pill { display: inline-block; padding: 8px 12px; border-radius: 999px; white-space: nowrap; font-size: 13px; }
+.priority-pill.normal { background: #dcfce7; color: #166534; }
+.priority-pill.medium { background: #fef3c7; color: #92400e; }
+.priority-pill.high { background: #fee2e2; color: #991b1b; }
+.evidence-list { display: grid; gap: 8px; margin: 15px 0 18px; }
+.evidence-row { display: grid; grid-template-columns: 76px 1fr auto; align-items: center; gap: 10px; background: #fff; border: 1px solid #e1ece6; border-radius: 8px; padding: 10px; font-size: 14px; }
+.evidence-ready, .evidence-pending { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 4px 7px; text-align: center; }
+.evidence-ready { color: #166534; background: #dcfce7; }.evidence-pending { color: #92400e; background: #fef3c7; }
+.evidence-panel ul { margin: 8px 0 14px; padding-left: 20px; text-align: left; }
+@media (max-width: 650px) { .evidence-form-grid { grid-template-columns: 1fr; } .evidence-panel-heading { flex-direction: column; } .evidence-row { grid-template-columns: 68px 1fr; } .evidence-row strong { grid-column: 2; } }
+/* Claim Risk / Review Triage panel (trained claim-risk ML model) */
+.claim-risk-section p { margin: 4px 0; }
+.claim-risk-section .claim-risk-model,
+.claim-risk-section .claim-risk-status,
+.claim-risk-section .claim-risk-score,
+.claim-risk-section .claim-risk-message {
+  font-size: 15px;
+  color: #16302a;
+}
+.claim-risk-message {
+  background: #f1f5f9;
+  border-left: 3px solid #64748b;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.language-selector { display: grid; gap: 5px; margin: 0 18px 16px; color: #dceee7; font-size: 12px; font-weight: 700; }
+.language-selector select { width: 100%; border: 1px solid #5b8274; border-radius: 7px; background: #174a3d; color: #fff; padding: 8px; font: inherit; }
+.pmfby-chatbot { position: fixed; right: 22px; bottom: 22px; z-index: 1200; }
+.chat-fab { border: 0; border-radius: 999px; background: #176b56; color: white; padding: 13px 17px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 20px #0004; }
+.chat-window { width: min(380px, calc(100vw - 32px)); max-height: min(560px, calc(100vh - 110px)); display: flex; flex-direction: column; margin-bottom: 12px; border: 1px solid #cbded6; border-radius: 14px; overflow: hidden; background: white; box-shadow: 0 12px 35px #0003; }
+.chat-window header { display: flex; justify-content: space-between; align-items: start; padding: 14px; background: #176b56; color: white; }.chat-window header small { display: block; opacity: .85; margin-top: 3px; }.chat-window header button { color: white; background: transparent; border: 0; font-size: 25px; cursor: pointer; }
+.chat-disclaimer { margin: 0; padding: 10px 13px; color: #496358; background: #f1f7f4; font-size: 12px; }.chat-messages { overflow: auto; min-height: 150px; padding: 12px; display: grid; gap: 9px; }.chat-empty { color: #61736b; }
+.chat-message { display: grid; grid-template-columns: 25px 1fr; gap: 7px; align-items: start; }.chat-message p { margin: 0; padding: 9px; border-radius: 9px; background: #edf6f2; font-size: 14px; }.chat-message.user p { background: #e6f0ff; }.chat-message button { grid-column: 2; justify-self: start; border: 0; background: none; color: #176b56; cursor: pointer; font-size: 12px; font-weight: 700; }.chat-error { color: #b91c1c; padding: 0 12px; font-size: 13px; }.chat-controls { display: grid; grid-template-columns: 1fr auto; gap: 7px; padding: 11px; border-top: 1px solid #dce8e2; }.chat-controls input { min-width: 0; border: 1px solid #b9cec5; border-radius: 7px; padding: 9px; }.chat-controls button { border: 0; border-radius: 7px; padding: 8px; background: #176b56; color: white; cursor: pointer; font-weight: 600; font-size: 12px; }.chat-controls button:nth-of-type(2),.chat-controls button:nth-of-type(3) { background: #eff6f3; color: #155c4a; }
